@@ -9,7 +9,7 @@ setup(
         'Click',
     ],
     entry_points='''
-        [console_script]
+        [console_scripts]
         groceries=groceries:cli
     ''',
 )
