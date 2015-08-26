@@ -4,7 +4,8 @@ GROCERIES CLI
 
 A command line interface for the Groceries API.
 
-Installation
-------------
+Installation & Development
+--------------------------
 
-Execute `pip install --editable .` to install the `groceries` command.
+Execute `make install` to install the `groceries` command. For other possibly
+useful commands please execute `make help`.
