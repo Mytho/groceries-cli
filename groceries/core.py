@@ -168,9 +168,13 @@ class Item(object):
         return r.status_code == 200
 
     def read(self):
-        '''List the items on the list.'''
+        '''List the items on the list.
+
+        Returns:
+            List of items
+        '''
         r = self.request.get('/item')
-        return r.json().get('items')
+        return r.json().get('items', [])
 
     def update(self, name):
         '''Buy an item of the list.
