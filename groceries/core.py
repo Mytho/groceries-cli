@@ -7,9 +7,6 @@ import yaml
 from functools import update_wrapper
 
 
-TOKEN_PATH = '.token'
-
-
 def authenticated(f):
     @click.pass_context
     def decorated_function(ctx, *args, **kwargs):
@@ -94,14 +91,8 @@ def login(ctx, username, password):
         username: string containing username
         password: string containing password
     '''
-    r = Request(ctx).post('/login',
-                          data=json.dumps(dict(username=username, password=password)),
-                          headers={'Content-Type':'application/json'})
-    if r.status_code is not 200:
-        click.echo('Login failed')
-        ctx.exit(1)
-    with os.fdopen(os.open('.token', os.O_WRONLY | os.O_CREAT, 0600), 'w') as file:
-        file.write(r.json().get('token'))
+    if not Auth(ctx).login(username, password):
+        click.echo('Incorrect username and/or password supplied')
 
 
 @cli.command()
@@ -112,8 +103,7 @@ def logout(ctx):
     Args:
         ctx: click.Context
     '''
-    if os.path.exists(TOKEN_PATH):
-        os.remove(TOKEN_PATH)
+    Auth(ctx).logout()
 
 
 @cli.command()
@@ -128,6 +118,46 @@ def remove(ctx, name):
     '''
     if not Item(ctx).delete(name):
         click.echo('Unable to find {0} on the list.'.format(name))
+
+
+class Auth(object):
+
+    TOKEN_PATH = '.token'
+
+    def __init__(self, ctx):
+        '''Create a new instance.
+
+        Serves as a repository for authentication. It is a wrapper arround a
+        Request object to make authentication simpler.
+
+        Args:
+            ctx: click.Context
+        '''
+        self.request = Request(ctx)
+
+    def login(self, username, password):
+        '''Login to allow manipulation of the groceries list.
+
+        Args:
+            username: string containing username
+            password: string containing password
+
+        Returns:
+            True if login was successful, False otherwise
+        '''
+        data = json.dumps({'username': username, 'password': password})
+        headers = {'Content-Type': 'application/json'}
+        r = self.request.post('/login', data=data, headers=headers)
+        if r.status_code == 200:
+            with os.fdopen(os.open(self.TOKEN_PATH, os.O_WRONLY | os.O_CREAT, 0600), 'w') as file:
+                file.write(r.json().get('token'))
+                return True
+        return False
+
+    def logout(self):
+        '''Logout.'''
+        if os.path.exists(self.TOKEN_PATH):
+            os.remove(self.TOKEN_PATH)
 
 
 class Item(object):
