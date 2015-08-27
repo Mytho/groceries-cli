@@ -10,6 +10,21 @@ from functools import update_wrapper
 TOKEN_PATH = '.token'
 
 
+class Item(object):
+
+    def __init__(self, ctx):
+        self.request = Request(ctx)
+
+    def add(self, name):
+        r = self.request.post('/item', data=json.dumps(dict(name=name)))
+        self.list()
+
+    def list(self):
+        r = self.request.get('/item')
+        for item in r.json().get('items'):
+            click.echo('{0}'.format(item.get('name')))
+
+
 class Request(object):
 
     def __init__(self, ctx):
@@ -124,26 +139,40 @@ def cli(ctx, config):
 
 
 @cli.command()
+@click.argument('item')
 @authenticated
-def add(ctx):
-    '''Add an item to the groceries list.'''
-    click.echo('Adding grocery...')
+def add(ctx, item):
+    '''Add an item to the groceries list.
+
+    Args:
+        ctx: click.Context
+        item: string containing item name
+    '''
+    Item(ctx).add(item)
 
 
 @cli.command()
+@click.argument('item')
 @authenticated
-def buy(ctx):
-    '''Buy an item on the groceries list.'''
-    click.echo('Buying grocery...')
+def buy(ctx, item):
+    '''Buy an item on the groceries list.
+
+    Args:
+        ctx: click.Context
+        item: string containing item name
+    '''
+    click.echo('Buying {0}...'.format(item))
 
 
 @cli.command()
 @authenticated
 def list(ctx):
-    '''List all items on the groceries list.'''
-    r = Request(ctx).get('/item')
-    for item in r.json().get('items'):
-        click.echo('{0}'.format(item.get('name')))
+    '''List all items on the groceries list.
+
+    Args:
+        ctx: click.Context
+    '''
+    Item(ctx).list()
 
 
 @cli.command()
@@ -183,7 +212,13 @@ def logout(ctx):
 
 
 @cli.command()
+@click.argument('item')
 @authenticated
-def remove(ctx):
-    '''Remove an item from the groceries list.'''
-    click.echo('Removing grocery...')
+def remove(ctx, item):
+    '''Remove an item from the groceries list.
+
+    Args:
+        ctx: click.Context
+        item: string containing item name
+    '''
+    click.echo('Removing {0}...'.format(item))
