@@ -112,7 +112,7 @@ def logout(ctx):
     Args:
         ctx: click.Context
     '''
-    if (os.path.exists(TOKEN_PATH)):
+    if os.path.exists(TOKEN_PATH):
         os.remove(TOKEN_PATH)
 
 
@@ -134,6 +134,10 @@ class Item(object):
 
     def __init__(self, ctx):
         '''Create a new instance.
+
+        Item is a sort of repository for the items, a wrapper around the
+        Request object for even easier requests that have to do with the
+        items on the grocery list.
 
         Args:
             ctx: click.Context
