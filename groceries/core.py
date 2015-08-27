@@ -5,7 +5,7 @@ import yaml
 
 from functools import update_wrapper
 
-from repos import Item, Token
+from utils import Item
 
 
 def authenticated(f):
@@ -61,8 +61,7 @@ def cli(ctx, config):
         ctx: click.Context
         config: click.File
     '''
-    ctx.obj = {'api': yaml.load(config.read()).get('api', ''),
-               'token': Token(ctx).read()}
+    ctx.obj = yaml.load(config.read())
 
 
 @cli.command()
@@ -103,33 +102,6 @@ def list(ctx):
     '''
     for item in Item(ctx).read():
         click.echo('{0}'.format(item.get('name')))
-
-
-@cli.command()
-@click.option('-u', '--username', prompt=True)
-@click.option('-p', '--password', prompt=True, hide_input=True)
-@click.pass_context
-def login(ctx, username, password):
-    '''Authenticate using a username and password.
-
-    Args:
-        ctx: click.Context
-        username: string containing username
-        password: string containing password
-    '''
-    if not Token(ctx).create(username, password):
-        click.echo('Incorrect username and/or password supplied')
-
-
-@cli.command()
-@click.pass_context
-def logout(ctx):
-    '''Logout.
-
-    Args:
-        ctx: click.Context
-    '''
-    Token(ctx).delete()
 
 
 @cli.command()
