@@ -52,7 +52,7 @@ def add(ctx, name):
         ctx: click.Context
         item: string containing item name
     '''
-    Item(ctx).add(name).list()
+    Item(ctx).add(name)
 
 
 @cli.command()
@@ -65,7 +65,7 @@ def buy(ctx, name):
         ctx: click.Context
         item: string containing item name
     '''
-    Item(ctx).buy(name).list()
+    Item(ctx).buy(name)
 
 
 @cli.command()
@@ -99,7 +99,6 @@ def login(ctx, username, password):
         ctx.exit(1)
     with os.fdopen(os.open('.token', os.O_WRONLY | os.O_CREAT, 0600), 'w') as file:
         file.write(r.json().get('token'))
-    click.echo('Login successful.')
 
 
 @cli.command()
@@ -112,7 +111,6 @@ def logout(ctx):
     '''
     if (os.path.exists(TOKEN_PATH)):
         os.remove(TOKEN_PATH)
-    click.echo('Logout successful.')
 
 
 @cli.command()
@@ -125,7 +123,7 @@ def remove(ctx, name):
         ctx: click.Context
         item: string containing item name
     '''
-    Item(ctx).remove(name).list()
+    Item(ctx).remove(name)
 
 
 class Item(object):
@@ -159,51 +157,34 @@ class Item(object):
 
         Args:
             name: string containing item name
-
-        Returns:
-            groceries.Item
         '''
         self.request.post('/item', data=json.dumps(dict(name=name)))
-        return self
 
     def buy(self, name):
         '''Buy an item of the list.
 
         Args:
             name: string containing item name
-
-        Returns:
-            groceries.Item
         '''
         id = self.id(name)
         if id:
             self.request.put('/item/{0}'.format(id))
-        return self
 
     def list(self):
-        '''List the items on the list.
-
-        Returns:
-            groceries.Item
-        '''
+        '''List the items on the list.'''
         r = self.request.get('/item')
         for item in r.json().get('items'):
             click.echo('{0}'.format(item.get('name')))
-        return self
 
     def remove(self, name):
         '''Delete an item from the list.
 
         Args:
             name: string containing item name
-
-        Returns:
-            groceries.Item
         '''
         id = self.id(name)
         if id:
             self.request.delete('/item/{0}'.format(id))
-        return self
 
 
 class Request(object):
