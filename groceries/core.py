@@ -10,6 +10,87 @@ from functools import update_wrapper
 TOKEN_PATH = '.token'
 
 
+class Request(object):
+
+    def __init__(self, ctx):
+        '''Create a new instance.
+
+        Args:
+            ctx: click.Context
+        '''
+        self.ctx = ctx
+
+    def delete(self, uri, data=None, headers=None):
+        '''Shortcut method to do a delete request.
+
+        Args:
+            uri: string containing endpoint
+            data: dict containing the payload
+            headers: dict containing the headers
+
+        Returns:
+            requests.Response
+        '''
+        return self.do('delete', uri, data, headers)
+
+    def do(self, method, uri, data=None, headers=None):
+        '''Do a requests using the requests library.
+
+        Args:
+            method: string containing HTTP method name
+            uri: string containing endpoint
+            data: dict containing the payload
+            headers: dict containing the headers
+
+        Returns:
+            requests.Response
+        '''
+        if headers is None:
+            headers = {'X-Auth-Token': self.ctx.obj.get('token'),
+                       'Content-Type': 'application/json'}
+        url = '{0}{1}'.format(self.ctx.obj.get('api'), uri)
+        return getattr(requests, method)(url, data=data, headers=headers)
+
+    def get(self, uri, data=None, headers=None):
+        '''Shortcut method to do a get request.
+
+        Args:
+            uri: string containing endpoint
+            data: dict containing the payload
+            headers: dict containing the headers
+
+        Returns:
+            requests.Response
+        '''
+        return self.do('get', uri, data, headers)
+
+    def post(self, uri, data=None, headers=None):
+        '''Shortcut method to do a post request.
+
+        Args:
+            uri: string containing endpoint
+            data: dict containing the payload
+            headers: dict containing the headers
+
+        Returns:
+            requests.Response
+        '''
+        return self.do('post', uri, data, headers)
+
+    def put(self, uri, data=None, headers=None):
+        '''Shortcut method to do a put request.
+
+        Args:
+            uri: string containing endpoint
+            data: dict containing the payload
+            headers: dict containing the headers
+
+        Returns:
+            requests.Response
+        '''
+        return self.do('put', uri, data, headers)
+
+
 def authenticated(f):
     @click.pass_context
     def decorated_function(ctx, *args, **kwargs):
@@ -60,8 +141,7 @@ def buy(ctx):
 @authenticated
 def list(ctx):
     '''List all items on the groceries list.'''
-    r = requests.get('{0}{1}'.format(ctx.obj.get('api'), '/item'),
-                     headers={'X-Auth-Token': ctx.obj.get('token')})
+    r = Request(ctx).get('/item')
     for item in r.json().get('items'):
         click.echo('{0}'.format(item.get('name')))
 
@@ -78,9 +158,9 @@ def login(ctx, username, password):
         username: string containing username
         password: string containing password
     '''
-    r = requests.post('{0}{1}'.format(ctx.obj.get('api'), '/login'),
-                      data=json.dumps(dict(username=username, password=password)),
-                      headers={'Content-Type':'application/json'})
+    r = Request(ctx).post('/login',
+                          data=json.dumps(dict(username=username, password=password)),
+                          headers={'Content-Type':'application/json'})
     if r.status_code is not 200:
         click.echo('Login failed')
         ctx.exit(1)
