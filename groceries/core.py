@@ -52,7 +52,8 @@ def add(ctx, name):
         ctx: click.Context
         item: string containing item name
     '''
-    Item(ctx).add(name)
+    if not Item(ctx).create(name):
+        click.echo('Unable to add {0} to the list'.format(name))
 
 
 @cli.command()
@@ -65,7 +66,8 @@ def buy(ctx, name):
         ctx: click.Context
         item: string containing item name
     '''
-    Item(ctx).buy(name)
+    if not Item(ctx).update(name):
+        click.echo('Unable to find {0} on the list.'.format(name))
 
 
 @cli.command()
@@ -76,7 +78,8 @@ def list(ctx):
     Args:
         ctx: click.Context
     '''
-    Item(ctx).list()
+    for item in Item(ctx).read():
+        click.echo('{0}'.format(item.get('name')))
 
 
 @cli.command()
@@ -123,7 +126,8 @@ def remove(ctx, name):
         ctx: click.Context
         item: string containing item name
     '''
-    Item(ctx).remove(name)
+    if not Item(ctx).delete(name):
+        click.echo('Unable to find {0} on the list.'.format(name))
 
 
 class Item(object):
@@ -149,42 +153,54 @@ class Item(object):
         for item in r.json().get('items'):
             if item.get('name') == name:
                 return item.get('id')
-        click.echo('Unable to find item \'{0}\''.format(name))
         return None
 
-    def add(self, name):
+    def create(self, name):
         '''Add a new item to the list.
 
         Args:
             name: string containing item name
-        '''
-        self.request.post('/item', data=json.dumps(dict(name=name)))
 
-    def buy(self, name):
+        Returns:
+            True if successful, otherwise False
+        '''
+        r = self.request.post('/item', data=json.dumps(dict(name=name)))
+        return r.status_code == 200
+
+    def read(self):
+        '''List the items on the list.'''
+        r = self.request.get('/item')
+        return r.json().get('items')
+
+    def update(self, name):
         '''Buy an item of the list.
 
         Args:
             name: string containing item name
+
+        Returns:
+            True if successful, otherwise False
         '''
         id = self.id(name)
         if id:
-            self.request.put('/item/{0}'.format(id))
+            r = self.request.put('/item/{0}'.format(id))
+            return r.status_code == 200
+        return False
 
-    def list(self):
-        '''List the items on the list.'''
-        r = self.request.get('/item')
-        for item in r.json().get('items'):
-            click.echo('{0}'.format(item.get('name')))
-
-    def remove(self, name):
+    def delete(self, name):
         '''Delete an item from the list.
 
         Args:
             name: string containing item name
+
+        Returns:
+            True if successful, otherwise False
         '''
         id = self.id(name)
         if id:
-            self.request.delete('/item/{0}'.format(id))
+            r = self.request.delete('/item/{0}'.format(id))
+            return r.status_code == 200
+        return False
 
 
 class Request(object):
