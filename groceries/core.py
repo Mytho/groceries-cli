@@ -1,18 +1,16 @@
 import click
-import json
-import requests
-import os
 import yaml
 
 from functools import update_wrapper
+
+from repos import Item, Token
 
 
 def authenticated(f):
     @click.pass_context
     def decorated_function(ctx, *args, **kwargs):
         if not ctx.obj.get('token'):
-            click.echo('Please login using the login command.')
-            ctx.exit(1)
+            ctx.fail('Please login using the login command.')
         return ctx.invoke(f, ctx, *args, **kwargs)
     return update_wrapper(decorated_function, f)
 
@@ -30,13 +28,8 @@ def cli(ctx, config):
         ctx: click.Context
         config: click.File
     '''
-    try:
-        with os.fdopen(os.open(TOKEN_PATH, os.O_RDONLY), 'r') as file:
-            token = file.readline()
-    except:
-        token = ''
     ctx.obj = {'api': yaml.load(config.read()).get('api', ''),
-               'token': token}
+               'token': Token(ctx).read()}
 
 
 @cli.command()
@@ -91,7 +84,7 @@ def login(ctx, username, password):
         username: string containing username
         password: string containing password
     '''
-    if not Auth(ctx).login(username, password):
+    if not Token(ctx).create(username, password):
         click.echo('Incorrect username and/or password supplied')
 
 
@@ -103,7 +96,7 @@ def logout(ctx):
     Args:
         ctx: click.Context
     '''
-    Auth(ctx).logout()
+    Token(ctx).delete()
 
 
 @cli.command()
@@ -118,205 +111,3 @@ def remove(ctx, name):
     '''
     if not Item(ctx).delete(name):
         click.echo('Unable to find {0} on the list.'.format(name))
-
-
-class Auth(object):
-
-    TOKEN_PATH = '.token'
-
-    def __init__(self, ctx):
-        '''Create a new instance.
-
-        Serves as a repository for authentication. It is a wrapper arround a
-        Request object to make authentication simpler.
-
-        Args:
-            ctx: click.Context
-        '''
-        self.request = Request(ctx)
-
-    def login(self, username, password):
-        '''Login to allow manipulation of the groceries list.
-
-        Args:
-            username: string containing username
-            password: string containing password
-
-        Returns:
-            True if login was successful, False otherwise
-        '''
-        data = json.dumps({'username': username, 'password': password})
-        headers = {'Content-Type': 'application/json'}
-        r = self.request.post('/login', data=data, headers=headers)
-        if r.status_code == 200:
-            with os.fdopen(os.open(self.TOKEN_PATH, os.O_WRONLY | os.O_CREAT, 0600), 'w') as file:
-                file.write(r.json().get('token'))
-                return True
-        return False
-
-    def logout(self):
-        '''Logout.'''
-        if os.path.exists(self.TOKEN_PATH):
-            os.remove(self.TOKEN_PATH)
-
-
-class Item(object):
-
-    def __init__(self, ctx):
-        '''Create a new instance.
-
-        Item is a sort of repository for the items, a wrapper around the
-        Request object for even easier requests that have to do with the
-        items on the grocery list.
-
-        Args:
-            ctx: click.Context
-        '''
-        self.request = Request(ctx)
-
-    def id(self, name):
-        '''Get the id of an item when a name is provided.
-
-        Args:
-            name: string containing item name
-
-        Returns:
-            id of the item as an int, None of no item was found
-        '''
-        r = self.request.get('/item')
-        for item in r.json().get('items'):
-            if item.get('name') == name:
-                return item.get('id')
-        return None
-
-    def create(self, name):
-        '''Add a new item to the list.
-
-        Args:
-            name: string containing item name
-
-        Returns:
-            True if successful, otherwise False
-        '''
-        r = self.request.post('/item', data=json.dumps(dict(name=name)))
-        return r.status_code == 200
-
-    def read(self):
-        '''List the items on the list.
-
-        Returns:
-            List of items
-        '''
-        r = self.request.get('/item')
-        return r.json().get('items', [])
-
-    def update(self, name):
-        '''Buy an item of the list.
-
-        Args:
-            name: string containing item name
-
-        Returns:
-            True if successful, otherwise False
-        '''
-        id = self.id(name)
-        if id:
-            r = self.request.put('/item/{0}'.format(id))
-            return r.status_code == 200
-        return False
-
-    def delete(self, name):
-        '''Delete an item from the list.
-
-        Args:
-            name: string containing item name
-
-        Returns:
-            True if successful, otherwise False
-        '''
-        id = self.id(name)
-        if id:
-            r = self.request.delete('/item/{0}'.format(id))
-            return r.status_code == 200
-        return False
-
-
-class Request(object):
-
-    def __init__(self, ctx):
-        '''Create a new instance.
-
-        Args:
-            ctx: click.Context
-        '''
-        self.ctx = ctx
-
-    def delete(self, uri, data=None, headers=None):
-        '''Shortcut method to do a delete request.
-
-        Args:
-            uri: string containing endpoint
-            data: dict containing request payload
-            headers: dict containing request headers
-
-        Returns:
-            requests.Response
-        '''
-        return self.do('delete', uri, data, headers)
-
-    def do(self, method, uri, data=None, headers=None):
-        '''Do a requests using the requests library.
-
-        Args:
-            method: string containing HTTP method name
-            uri: string containing endpoint
-            data: dict containing request payload
-            headers: dict containing request headers
-
-        Returns:
-            requests.Response
-        '''
-        if headers is None:
-            headers = {'X-Auth-Token': self.ctx.obj.get('token'),
-                       'Content-Type': 'application/json'}
-        url = '{0}{1}'.format(self.ctx.obj.get('api'), uri)
-        return getattr(requests, method)(url, data=data, headers=headers)
-
-    def get(self, uri, data=None, headers=None):
-        '''Shortcut method to do a get request.
-
-        Args:
-            uri: string containing endpoint
-            data: dict containing request payload
-            headers: dict containing request headers
-
-        Returns:
-            requests.Response
-        '''
-        return self.do('get', uri, data, headers)
-
-    def post(self, uri, data=None, headers=None):
-        '''Shortcut method to do a post request.
-
-        Args:
-            uri: string containing endpoint
-            data: dict containing request payload
-            headers: dict containing request headers
-
-        Returns:
-            requests.Response
-        '''
-        return self.do('post', uri, data, headers)
-
-    def put(self, uri, data=None, headers=None):
-        '''Shortcut method to do a put request.
-
-        Args:
-            uri: string containing endpoint
-            data: dict containing request payload
-            headers: dict containing request headers
-
-        Returns:
-            requests.Response
-        '''
-        return self.do('put', uri, data, headers)
