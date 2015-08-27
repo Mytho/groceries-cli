@@ -30,7 +30,7 @@ class Item(Repo):
             id of the item as an int, None of no item was found
         '''
         r = self.request.get('/item')
-        for item in r.json().get('items'):
+        for item in r.json().get('items', []):
             if item.get('name') == name:
                 return item.get('id')
         return None

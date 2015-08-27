@@ -25,7 +25,7 @@ class Request(object):
         return self.do('delete', uri, data, headers)
 
     def do(self, method, uri, data=None, headers=None):
-        '''Do a requests using the requests library.
+        '''Do a request using the requests library.
 
         Args:
             method: string containing HTTP method name
@@ -37,7 +37,7 @@ class Request(object):
             requests.Response
         '''
         if headers is None:
-            headers = {'X-Auth-Token': self.ctx.obj.get('token'),
+            headers = {'X-Auth-Token': self.ctx.obj.get('token').strip(),
                        'Content-Type': 'application/json'}
         url = '{0}{1}'.format(self.ctx.obj.get('api'), uri)
         return getattr(requests, method)(url, data=data, headers=headers)
