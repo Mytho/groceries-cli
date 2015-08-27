@@ -44,16 +44,16 @@ def cli(ctx, config):
 
 @cli.command()
 @authenticated
-def buy(ctx):
-    '''Buy an item on the groceries list.'''
-    click.echo('Buying grocery...')
+def add(ctx):
+    '''Add an item to the groceries list.'''
+    click.echo('Adding grocery...')
 
 
 @cli.command()
 @authenticated
-def add(ctx):
-    '''Add an item to the groceries list.'''
-    click.echo('Adding grocery...')
+def buy(ctx):
+    '''Buy an item on the groceries list.'''
+    click.echo('Buying grocery...')
 
 
 @cli.command()
@@ -64,13 +64,6 @@ def list(ctx):
                      headers={'X-Auth-Token': ctx.obj.get('token')})
     for item in r.json().get('items'):
         click.echo('{0}'.format(item.get('name')))
-
-
-@cli.command()
-@authenticated
-def remove(ctx):
-    '''Remove an item from the groceries list.'''
-    click.echo('Removing grocery...')
 
 
 @cli.command()
@@ -107,3 +100,10 @@ def logout(ctx):
     if (os.path.exists(TOKEN_PATH)):
         os.remove(TOKEN_PATH)
     click.echo('Logout successful.')
+
+
+@cli.command()
+@authenticated
+def remove(ctx):
+    '''Remove an item from the groceries list.'''
+    click.echo('Removing grocery...')
