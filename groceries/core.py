@@ -10,102 +10,6 @@ from functools import update_wrapper
 TOKEN_PATH = '.token'
 
 
-class Item(object):
-
-    def __init__(self, ctx):
-        self.request = Request(ctx)
-
-    def add(self, name):
-        r = self.request.post('/item', data=json.dumps(dict(name=name)))
-        self.list()
-
-    def list(self):
-        r = self.request.get('/item')
-        for item in r.json().get('items'):
-            click.echo('{0}'.format(item.get('name')))
-
-
-class Request(object):
-
-    def __init__(self, ctx):
-        '''Create a new instance.
-
-        Args:
-            ctx: click.Context
-        '''
-        self.ctx = ctx
-
-    def delete(self, uri, data=None, headers=None):
-        '''Shortcut method to do a delete request.
-
-        Args:
-            uri: string containing endpoint
-            data: dict containing the payload
-            headers: dict containing the headers
-
-        Returns:
-            requests.Response
-        '''
-        return self.do('delete', uri, data, headers)
-
-    def do(self, method, uri, data=None, headers=None):
-        '''Do a requests using the requests library.
-
-        Args:
-            method: string containing HTTP method name
-            uri: string containing endpoint
-            data: dict containing the payload
-            headers: dict containing the headers
-
-        Returns:
-            requests.Response
-        '''
-        if headers is None:
-            headers = {'X-Auth-Token': self.ctx.obj.get('token'),
-                       'Content-Type': 'application/json'}
-        url = '{0}{1}'.format(self.ctx.obj.get('api'), uri)
-        return getattr(requests, method)(url, data=data, headers=headers)
-
-    def get(self, uri, data=None, headers=None):
-        '''Shortcut method to do a get request.
-
-        Args:
-            uri: string containing endpoint
-            data: dict containing the payload
-            headers: dict containing the headers
-
-        Returns:
-            requests.Response
-        '''
-        return self.do('get', uri, data, headers)
-
-    def post(self, uri, data=None, headers=None):
-        '''Shortcut method to do a post request.
-
-        Args:
-            uri: string containing endpoint
-            data: dict containing the payload
-            headers: dict containing the headers
-
-        Returns:
-            requests.Response
-        '''
-        return self.do('post', uri, data, headers)
-
-    def put(self, uri, data=None, headers=None):
-        '''Shortcut method to do a put request.
-
-        Args:
-            uri: string containing endpoint
-            data: dict containing the payload
-            headers: dict containing the headers
-
-        Returns:
-            requests.Response
-        '''
-        return self.do('put', uri, data, headers)
-
-
 def authenticated(f):
     @click.pass_context
     def decorated_function(ctx, *args, **kwargs):
@@ -139,29 +43,29 @@ def cli(ctx, config):
 
 
 @cli.command()
-@click.argument('item')
+@click.argument('name')
 @authenticated
-def add(ctx, item):
+def add(ctx, name):
     '''Add an item to the groceries list.
 
     Args:
         ctx: click.Context
         item: string containing item name
     '''
-    Item(ctx).add(item)
+    Item(ctx).add(name).list()
 
 
 @cli.command()
-@click.argument('item')
+@click.argument('name')
 @authenticated
-def buy(ctx, item):
+def buy(ctx, name):
     '''Buy an item on the groceries list.
 
     Args:
         ctx: click.Context
         item: string containing item name
     '''
-    click.echo('Buying {0}...'.format(item))
+    Item(ctx).buy(name).list()
 
 
 @cli.command()
@@ -212,13 +116,172 @@ def logout(ctx):
 
 
 @cli.command()
-@click.argument('item')
+@click.argument('name')
 @authenticated
-def remove(ctx, item):
+def remove(ctx, name):
     '''Remove an item from the groceries list.
 
     Args:
         ctx: click.Context
         item: string containing item name
     '''
-    click.echo('Removing {0}...'.format(item))
+    Item(ctx).remove(name).list()
+
+
+class Item(object):
+
+    def __init__(self, ctx):
+        '''Create a new instance.
+
+        Args:
+            ctx: click.Context
+        '''
+        self.request = Request(ctx)
+
+    def id(self, name):
+        '''Get the id of an item when a name is provided.
+
+        Args:
+            name: string containing item name
+
+        Returns:
+            id of the item as an int, None of no item was found
+        '''
+        r = self.request.get('/item')
+        for item in r.json().get('items'):
+            if item.get('name') == name:
+                return item.get('id')
+        click.echo('Unable to find item \'{0}\''.format(name))
+        return None
+
+    def add(self, name):
+        '''Add a new item to the list.
+
+        Args:
+            name: string containing item name
+
+        Returns:
+            groceries.Item
+        '''
+        self.request.post('/item', data=json.dumps(dict(name=name)))
+        return self
+
+    def buy(self, name):
+        '''Buy an item of the list.
+
+        Args:
+            name: string containing item name
+
+        Returns:
+            groceries.Item
+        '''
+        id = self.id(name)
+        if id:
+            self.request.put('/item/{0}'.format(id))
+        return self
+
+    def list(self):
+        '''List the items on the list.
+
+        Returns:
+            groceries.Item
+        '''
+        r = self.request.get('/item')
+        for item in r.json().get('items'):
+            click.echo('{0}'.format(item.get('name')))
+        return self
+
+    def remove(self, name):
+        '''Delete an item from the list.
+
+        Args:
+            name: string containing item name
+
+        Returns:
+            groceries.Item
+        '''
+        id = self.id(name)
+        if id:
+            self.request.delete('/item/{0}'.format(id))
+        return self
+
+
+class Request(object):
+
+    def __init__(self, ctx):
+        '''Create a new instance.
+
+        Args:
+            ctx: click.Context
+        '''
+        self.ctx = ctx
+
+    def delete(self, uri, data=None, headers=None):
+        '''Shortcut method to do a delete request.
+
+        Args:
+            uri: string containing endpoint
+            data: dict containing request payload
+            headers: dict containing request headers
+
+        Returns:
+            requests.Response
+        '''
+        return self.do('delete', uri, data, headers)
+
+    def do(self, method, uri, data=None, headers=None):
+        '''Do a requests using the requests library.
+
+        Args:
+            method: string containing HTTP method name
+            uri: string containing endpoint
+            data: dict containing request payload
+            headers: dict containing request headers
+
+        Returns:
+            requests.Response
+        '''
+        if headers is None:
+            headers = {'X-Auth-Token': self.ctx.obj.get('token'),
+                       'Content-Type': 'application/json'}
+        url = '{0}{1}'.format(self.ctx.obj.get('api'), uri)
+        return getattr(requests, method)(url, data=data, headers=headers)
+
+    def get(self, uri, data=None, headers=None):
+        '''Shortcut method to do a get request.
+
+        Args:
+            uri: string containing endpoint
+            data: dict containing request payload
+            headers: dict containing request headers
+
+        Returns:
+            requests.Response
+        '''
+        return self.do('get', uri, data, headers)
+
+    def post(self, uri, data=None, headers=None):
+        '''Shortcut method to do a post request.
+
+        Args:
+            uri: string containing endpoint
+            data: dict containing request payload
+            headers: dict containing request headers
+
+        Returns:
+            requests.Response
+        '''
+        return self.do('post', uri, data, headers)
+
+    def put(self, uri, data=None, headers=None):
+        '''Shortcut method to do a put request.
+
+        Args:
+            uri: string containing endpoint
+            data: dict containing request payload
+            headers: dict containing request headers
+
+        Returns:
+            requests.Response
+        '''
+        return self.do('put', uri, data, headers)
