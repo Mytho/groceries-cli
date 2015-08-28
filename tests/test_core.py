@@ -4,6 +4,25 @@ from groceries.core import cli
 from tests import mock_list, MockResponse
 
 
+@patch('requests.get', side_effect=[MockResponse(),
+                                    MockResponse(json=dict(items=mock_list))])
+@patch('requests.post', return_value=MockResponse(json=dict(token='secret')))
+@patch('getpass.getpass', new=raw_input)
+def test_wizard(get, post, runner):
+    with runner.isolated_filesystem():
+        result = runner.invoke(cli, args=['list'],
+                               input='http://localhost\nuser\npass\n')
+        assert result.exit_code == 0
+
+
+@patch('requests.get', return_value=MockResponse(404))
+def test_wizard_to_many_tries(get, runner):
+    with runner.isolated_filesystem():
+        result = runner.invoke(cli, args=['list'],
+                               input='http://localhost\n')
+        assert result.exit_code == 1
+
+
 @patch('groceries.config.Wizard.__call__')
 @patch('requests.post', return_value=MockResponse())
 def test_add(wizard, post, runner):

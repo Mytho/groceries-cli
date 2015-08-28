@@ -7,12 +7,15 @@ help:
 
 check:
 	flake8 groceries
+	flake8 tests
 
 clean:
 	find . -name '__pycache__' -delete -o -name '*.pyc' -delete
 
 install:
 	pip install --editable .
+
+test: check unittest
 
 unittest:
 	coverage run --source groceries --module pytest tests
