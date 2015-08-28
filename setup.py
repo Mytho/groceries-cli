@@ -2,14 +2,17 @@ from setuptools import setup
 
 
 setup(
-    name='groceries',
+    name='groceries-cli',
     version='0.0.1',
     py_modules=['groceries'],
     install_requires=[
-        'Click',
+        'click==5.1',
+        'flake8==2.4.1',
+        'pyyaml==3.11',
+        'requests==2.7.0',
     ],
     entry_points='''
         [console_scripts]
-        groceries=groceries:cli
+        groceries=groceries.core:cli
     ''',
 )
