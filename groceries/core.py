@@ -1,9 +1,6 @@
 import click
-import getpass
-import json
-import requests
 
-from config import Config, Wizard
+from config import Wizard
 from utils import Item
 
 

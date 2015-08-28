@@ -32,7 +32,8 @@ class Config(object):
 
     def read(self):
         '''Read the contents of the configuration file.'''
-        with os.fdopen(os.open(self.path, os.O_RDONLY | os.O_CREAT, 0600), 'r') as file:
+        fd = os.open(self.path, os.O_RDONLY | os.O_CREAT, 0600)
+        with os.fdopen(fd, 'r') as file:
             y = yaml.load(file.read())
             self.yaml = y if y else {}
 
@@ -49,7 +50,8 @@ class Config(object):
 
     def write(self):
         '''Write the configuration to the file.'''
-        with os.fdopen(os.open(self.path, os.O_WRONLY | os.O_CREAT, 0600), 'w') as file:
+        fd = os.open(self.path, os.O_WRONLY | os.O_CREAT, 0600)
+        with os.fdopen(fd, 'w') as file:
             file.write(yaml.safe_dump(self.yaml, default_flow_style=False))
 
 
@@ -130,7 +132,8 @@ class Api(Step):
             String containing the URL.
         '''
         url = raw_input('What is the URL of the API? ')
-        if not requests.get('{0}{1}'.format(url, '/status')).status_code == 200:
+        r = requests.get('{0}{1}'.format(url, '/status'))
+        if not r.status_code == 200:
             raise Exception()
         return url
 
@@ -151,9 +154,11 @@ class Token(Step):
         '''
         username = raw_input('What is your username? ')
         password = getpass.getpass('And your password? ')
-        token = requests.post('{0}{1}'.format(config.get('api'), '/login'),
-                              data=json.dumps({'username': username, 'password': password}),
-                              headers={'Content-Type': 'application/json'}).json().get('token')
+        r = requests.post('{0}{1}'.format(config.get('api'), '/login'),
+                          data=json.dumps({'username': username,
+                                           'password': password}),
+                          headers={'Content-Type': 'application/json'})
+        token = r.json().get('token')
         if not token:
             raise Exception()
         return token
