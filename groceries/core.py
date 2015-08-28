@@ -32,6 +32,7 @@ def add(ctx, name):
     '''
     if not Item(ctx).create(name):
         click.echo('Unable to add {0} to the list'.format(name))
+        ctx.exit(1)
 
 
 @cli.command()
@@ -46,6 +47,7 @@ def buy(ctx, name):
     '''
     if not Item(ctx).update(name):
         click.echo('Unable to find {0} on the list.'.format(name))
+        ctx.exit(1)
 
 
 @cli.command()
@@ -72,3 +74,4 @@ def remove(ctx, name):
     '''
     if not Item(ctx).delete(name):
         click.echo('Unable to find {0} on the list.'.format(name))
+        ctx.exit(1)

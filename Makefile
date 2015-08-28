@@ -13,3 +13,7 @@ clean:
 
 install:
 	pip install --editable .
+
+unittest:
+	coverage run --source groceries --module pytest tests
+	coverage report --fail-under=100 --show-missing
