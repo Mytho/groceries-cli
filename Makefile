@@ -13,9 +13,9 @@ clean:
 	find . -name '__pycache__' -delete -o -name '*.pyc' -delete
 
 install:
-	pip install --editable .
+	pip install --force-reinstall --upgrade --editable .
 
-test: check unittest
+test: install check unittest
 
 unittest:
 	coverage run --source groceries --module pytest tests
