@@ -8,6 +8,7 @@ setup(
     install_requires=[
         'click==5.1',
         'coverage==3.7.1',
+        'coveralls==0.5',
         'flake8==2.4.1',
         'mock==1.3.0',
         'pytest==2.7.2',
