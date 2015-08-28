@@ -1,55 +1,11 @@
 import click
-import os
-import requests
-import yaml
 
-from functools import update_wrapper
-
-from repos import Item, Token
-
-
-def authenticated(f):
-    @click.pass_context
-    def decorated_function(ctx, *args, **kwargs):
-        if not ctx.obj.get('token'):
-            ctx.fail('Please login using the login command.')
-        return ctx.invoke(f, ctx, *args, **kwargs)
-    return update_wrapper(decorated_function, f)
-
-
-def validate_config(ctx, param, values, tries=0):
-    '''Validates if config file exists, if not create a configuration file.
-
-    Args:
-        ctx: click.Context
-        param: click.Param
-        values: parameter value
-        tries: number of tries
-
-    Returns:
-        Open file object
-    '''
-    if not os.path.exists(values):
-        if tries == 0:
-            click.echo('No config file found. Let\'s create it:')
-        url = raw_input('What is the API\'s base URL? ')
-        try:
-            if not requests.get(url).status_code != 200:
-                raise Exception()
-        except:
-            tries += 1
-            if tries < 3:
-                click.echo('Invalid URL supplied')
-                return validate_config(ctx, param, values, tries)
-            click.echo('To many tries')
-            ctx.exit(1)
-        with os.fdopen(os.open(values, os.O_WRONLY | os.O_CREAT, 0600), 'w') as file:
-            file.write('api: {0}'.format(url))
-    return os.fdopen(os.open(values, os.O_RDONLY), 'r')
+from config import Wizard
+from utils import Item
 
 
 @click.group()
-@click.option('-c', '--config', default='.groceries.yml', callback=validate_config)
+@click.option('-c', '--config', default='.groceries.yml', callback=Wizard())
 @click.pass_context
 def cli(ctx, config):
     '''A command line interface for the Groceries API.
@@ -59,15 +15,14 @@ def cli(ctx, config):
 
     Args:
         ctx: click.Context
-        config: click.File
+        config: groceries.config.Config
     '''
-    ctx.obj = {'api': yaml.load(config.read()).get('api', ''),
-               'token': Token(ctx).read()}
+    ctx.obj = config
 
 
 @cli.command()
 @click.argument('name')
-@authenticated
+@click.pass_context
 def add(ctx, name):
     '''Add an item to the groceries list.
 
@@ -81,7 +36,7 @@ def add(ctx, name):
 
 @cli.command()
 @click.argument('name')
-@authenticated
+@click.pass_context
 def buy(ctx, name):
     '''Buy an item on the groceries list.
 
@@ -94,7 +49,7 @@ def buy(ctx, name):
 
 
 @cli.command()
-@authenticated
+@click.pass_context
 def list(ctx):
     '''List all items on the groceries list.
 
@@ -106,35 +61,8 @@ def list(ctx):
 
 
 @cli.command()
-@click.option('-u', '--username', prompt=True)
-@click.option('-p', '--password', prompt=True, hide_input=True)
-@click.pass_context
-def login(ctx, username, password):
-    '''Authenticate using a username and password.
-
-    Args:
-        ctx: click.Context
-        username: string containing username
-        password: string containing password
-    '''
-    if not Token(ctx).create(username, password):
-        click.echo('Incorrect username and/or password supplied')
-
-
-@cli.command()
-@click.pass_context
-def logout(ctx):
-    '''Logout.
-
-    Args:
-        ctx: click.Context
-    '''
-    Token(ctx).delete()
-
-
-@cli.command()
 @click.argument('name')
-@authenticated
+@click.pass_context
 def remove(ctx, name):
     '''Remove an item from the groceries list.
 
