@@ -113,9 +113,6 @@ class Step(object):
         config.write()
         return config
 
-    def value(self):
-        raise NotImplemented()
-
 
 class Api(Step):
 
@@ -158,7 +155,4 @@ class Token(Step):
                           data=json.dumps({'username': username,
                                            'password': password}),
                           headers={'Content-Type': 'application/json'})
-        token = r.json().get('token')
-        if not token:
-            raise Exception()
-        return token
+        return r.json().get('token')
