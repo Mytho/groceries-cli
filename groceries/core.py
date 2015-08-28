@@ -1,16 +1,14 @@
 import click
-import os
+import getpass
+import json
 import requests
-import yaml
 
-from functools import update_wrapper
-
-from config import validate
+from config import Config, Wizard
 from utils import Item
 
 
 @click.group()
-@click.option('-c', '--config', default='.groceries.yml', callback=validate)
+@click.option('-c', '--config', default='.groceries.yml', callback=Wizard())
 @click.pass_context
 def cli(ctx, config):
     '''A command line interface for the Groceries API.
@@ -20,9 +18,9 @@ def cli(ctx, config):
 
     Args:
         ctx: click.Context
-        config: click.File
+        config: groceries.config.Config
     '''
-    ctx.obj = yaml.load(config.read())
+    ctx.obj = config
 
 
 @cli.command()
