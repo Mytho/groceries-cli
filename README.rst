@@ -1,3 +1,6 @@
+.. image:: https://coveralls.io/repos/Mytho/groceries-cli/badge.svg?branch=master&service=github
+  :target: https://coveralls.io/github/Mytho/groceries-cli?branch=master
+
 =============
 GROCERIES CLI
 =============
