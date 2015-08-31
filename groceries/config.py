@@ -104,6 +104,8 @@ class Step(object):
         '''
         try:
             config.set(self.key, self.value(config))
+        except KeyboardInterrupt:
+            ctx.abort()
         except:
             if count < self.max_tries:
                 click.echo(self.error)
