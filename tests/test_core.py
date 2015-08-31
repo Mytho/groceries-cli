@@ -1,4 +1,5 @@
 from mock import patch
+from six.moves import input
 
 from groceries.core import cli
 from tests import mock_list, MockResponse
@@ -7,7 +8,7 @@ from tests import mock_list, MockResponse
 @patch('requests.get', side_effect=[MockResponse(),
                                     MockResponse(json=dict(items=mock_list))])
 @patch('requests.post', return_value=MockResponse(json=dict(token='secret')))
-@patch('getpass.getpass', new=raw_input)
+@patch('getpass.getpass', new=input)
 def test_wizard(get, post, runner):
     with runner.isolated_filesystem():
         result = runner.invoke(cli, args=['list'],

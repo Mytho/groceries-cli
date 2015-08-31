@@ -15,6 +15,7 @@ setup(
         'pytest==2.7.2',
         'pyyaml==3.11',
         'requests==2.7.0',
+        'tox==2.1.1',
     ],
     entry_points='''
         [console_scripts]

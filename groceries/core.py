@@ -1,7 +1,7 @@
 import click
 
-from config import Wizard
-from utils import Item
+from groceries.config import Wizard
+from groceries.utils import Item
 
 
 @click.group()
