@@ -22,4 +22,3 @@ test: install check unittest
 unittest:
 	coverage run --source groceries --module pytest tests
 	coverage report --fail-under=100 --show-missing
-	coveralls
