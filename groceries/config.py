@@ -5,6 +5,8 @@ import os
 import requests
 import yaml
 
+from six.moves import input
+
 
 class Config(object):
 
@@ -32,7 +34,7 @@ class Config(object):
 
     def read(self):
         '''Read the contents of the configuration file.'''
-        fd = os.open(self.path, os.O_RDONLY | os.O_CREAT, 0600)
+        fd = os.open(self.path, os.O_RDONLY | os.O_CREAT, 0o600)
         with os.fdopen(fd, 'r') as file:
             y = yaml.load(file.read())
             self.yaml = y if y else {}
@@ -50,7 +52,7 @@ class Config(object):
 
     def write(self):
         '''Write the configuration to the file.'''
-        fd = os.open(self.path, os.O_WRONLY | os.O_CREAT, 0600)
+        fd = os.open(self.path, os.O_WRONLY | os.O_CREAT, 0o600)
         with os.fdopen(fd, 'w') as file:
             file.write(yaml.safe_dump(self.yaml, default_flow_style=False))
 
@@ -130,7 +132,7 @@ class Api(Step):
         Returns:
             String containing the URL.
         '''
-        url = raw_input('What is the URL of the API? ')
+        url = input('What is the URL of the API? ')
         r = requests.get('{0}{1}'.format(url, '/status'))
         if not r.status_code == 200:
             raise Exception()
@@ -151,7 +153,7 @@ class Token(Step):
         Returns:
             String containing the token.
         '''
-        username = raw_input('What is your username? ')
+        username = input('What is your username? ')
         password = getpass.getpass('And your password? ')
         r = requests.post('{0}{1}'.format(config.get('api'), '/login'),
                           data=json.dumps({'username': username,

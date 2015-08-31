@@ -17,7 +17,8 @@ clean:
 install:
 	pip install --force-reinstall --upgrade --editable .
 
-test: install check unittest
+test: check
+	tox
 
 unittest:
 	coverage run --source groceries --module pytest tests
