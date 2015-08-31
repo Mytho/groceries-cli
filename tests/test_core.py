@@ -18,8 +18,14 @@ def test_wizard(get, post, runner):
 @patch('requests.get', return_value=MockResponse(404))
 def test_wizard_to_many_tries(get, runner):
     with runner.isolated_filesystem():
-        result = runner.invoke(cli, args=['list'],
-                               input='http://localhost\n')
+        result = runner.invoke(cli, args=['list'], input='http://localhost\n')
+        assert result.exit_code == 1
+
+
+@patch('requests.get', side_effect=KeyboardInterrupt('Interrupt!'))
+def test_wizard_keyboard_interrupt(get, runner):
+    with runner.isolated_filesystem():
+        result = runner.invoke(cli, args=['list'], input='http://localhost\n')
         assert result.exit_code == 1
 
 
