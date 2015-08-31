@@ -5,7 +5,8 @@ from utils import Item
 
 
 @click.group()
-@click.option('-c', '--config', default='.groceries.yml', callback=Wizard())
+@click.option('-c', '--config', default='.groceries.yml',
+              envvar='GROCERIES_CONFIG_PATH', callback=Wizard())
 @click.pass_context
 def cli(ctx, config):
     '''A command line interface for the Groceries API.
