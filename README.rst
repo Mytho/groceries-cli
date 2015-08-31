@@ -8,7 +8,7 @@
 GROCERIES CLI
 =============
 
-A command line interface for the Groceries API.
+A command line interface for the [Groceries API](https://github.com/Mytho/groceries-api).
 
 Installation & Development
 --------------------------
