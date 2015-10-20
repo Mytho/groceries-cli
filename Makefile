@@ -8,8 +8,7 @@ help:
 	@echo 'unittest -- run the unit tests'
 
 check:
-	flake8 groceries
-	flake8 tests
+	flake8 --show-source groceries tests
 
 clean:
 	find . -name '__pycache__' -delete -o -name '*.pyc' -delete
@@ -21,5 +20,5 @@ test: check
 	tox
 
 unittest:
-	coverage run --source groceries --module pytest tests
+	coverage run --source groceries --module pytest tests --assert=plain
 	coverage report --fail-under=100 --show-missing
