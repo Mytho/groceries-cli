@@ -1,5 +1,6 @@
 import click
 
+from groceries import __version__
 from groceries.config import Wizard
 from groceries.utils import Item
 
@@ -12,6 +13,12 @@ from groceries.utils import Item
 def cli(ctx, config):
     '''A command line interface for the Groceries API.'''
     ctx.obj = config
+
+
+@cli.command()
+def version():
+    '''Display the version of this tool.'''
+    click.echo('groceries-cli/{}'.format(__version__))
 
 
 @cli.command()
