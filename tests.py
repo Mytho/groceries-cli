@@ -7,7 +7,8 @@ from six.moves import input
 
 from groceries.core import cli
 
-del os.environ['GROCERIES_CONFIG']
+if 'GROCERIES_CONFIG' in os.environ:
+    del os.environ['GROCERIES_CONFIG']
 
 mock_list = [
     dict(id=1, name='apples'),
