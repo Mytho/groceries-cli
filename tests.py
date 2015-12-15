@@ -5,6 +5,7 @@ from click.testing import CliRunner
 from mock import patch
 from six.moves import input
 
+from groceries import __version__
 from groceries.core import cli
 
 if 'GROCERIES_CONFIG' in os.environ:
@@ -57,6 +58,13 @@ def test_wizard_keyboard_interrupt(get, runner):
     with runner.isolated_filesystem():
         result = runner.invoke(cli, args=['list'], input='http://localhost\n')
         assert result.exit_code == 1
+
+
+@patch('groceries.config.Wizard.__call__')
+def test_version(wizard, runner):
+    result = runner.invoke(cli, args=['version'])
+    assert result.exit_code == 0
+    assert result.output == 'groceries-cli/{}\n'.format(__version__)
 
 
 @patch('groceries.config.Wizard.__call__')
