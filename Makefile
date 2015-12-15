@@ -8,7 +8,7 @@ help:
 	@echo 'unittest -- run the unit tests'
 
 check:
-	flake8 --show-source setup.py groceries tests
+	flake8 --show-source setup.py groceries tests.py
 
 clean:
 	find . -name '__pycache__' -delete -o -name '*.pyc' -delete
