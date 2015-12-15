@@ -20,5 +20,5 @@ test: check
 	tox
 
 unittest:
-	coverage run --source groceries --module pytest tests --assert=plain
+	coverage run --source groceries --module pytest tests.py --assert=plain
 	coverage report --fail-under=100 --show-missing
